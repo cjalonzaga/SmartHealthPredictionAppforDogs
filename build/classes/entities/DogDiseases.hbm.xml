@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated 11 15, 21 8:31:53 PM by Hibernate Tools 4.3.1 -->
+<hibernate-mapping>
+    <class name="entities.DogDiseases" table="dog_diseases" catalog="shpda_dogs" optimistic-lock="version">
+        <id name="id" type="java.lang.Integer">
+            <column name="id" />
+            <generator class="identity" />
+        </id>
+        <property name="diseaseName" type="string">
+            <column name="disease_name" length="50" not-null="true" />
+        </property>
+        <property name="diseaseInfo" type="string">
+            <column name="disease_info" length="65535" not-null="true" />
+        </property>
+        <set name="diseaseSymptomsMaps" table="disease_symptoms_map" inverse="true" lazy="true" fetch="select">
+            <key>
+                <column name="disease_ID" not-null="true" />
+            </key>
+            <one-to-many class="entities.DiseaseSymptomsMap" />
+        </set>
+    </class>
+</hibernate-mapping>
