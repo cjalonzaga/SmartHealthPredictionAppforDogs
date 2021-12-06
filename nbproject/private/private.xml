@@ -5,9 +5,11 @@
         <group>
             <file>file:/D:/Java%20Applications/SmartHealthPredictionAppForDogsV2/src/persistence/DBQueries.java</file>
             <file>file:/D:/Java%20Applications/SmartHealthPredictionAppForDogsV2/src/persistence/Diagnose.java</file>
-            <file>file:/D:/Java%20Applications/SmartHealthPredictionAppForDogsV2/src/persistence/GUIUpdater.java</file>
+            <file>file:/D:/Java%20Applications/SmartHealthPredictionAppForDogsV2/src/persistence/SavePatientRecords.java</file>
             <file>file:/D:/Java%20Applications/SmartHealthPredictionAppForDogsV2/src/persistence/SaveRecords.java</file>
             <file>file:/D:/Java%20Applications/SmartHealthPredictionAppForDogsV2/src/MainWindow.java</file>
+            <file>file:/D:/Java%20Applications/SmartHealthPredictionAppForDogsV2/src/entities/DogDiseases.java</file>
+            <file>file:/D:/Java%20Applications/SmartHealthPredictionAppForDogsV2/src/persistence/ViewRecords.java</file>
         </group>
     </open-files>
 </project-private>

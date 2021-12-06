@@ -9,12 +9,14 @@ import entities.DiseaseSymptomsMap;
 import entities.DogDiseases;
 import entities.SymptomsList;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.SwingWorker;
 import org.apache.commons.collections.map.MultiValueMap;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import utilities.HibernateUtil;
 
@@ -30,7 +32,7 @@ public class SaveRecords extends SwingWorker{
     @Override
     public Object doInBackground() throws Exception {
         
-        saveData(getDogDiseaseData());
+        saveData( getDogDiseaseData() );
         
         return "Disease information has been saved!";
     }
@@ -44,7 +46,6 @@ public class SaveRecords extends SwingWorker{
     }
     
     public void saveData(Object obj){
-        
         
         Session session = HibernateUtil.getSessionFactory().openSession();
         session.beginTransaction();
@@ -67,24 +68,63 @@ public class SaveRecords extends SwingWorker{
                 SymptomsList sl = (SymptomsList) session.get(SymptomsList.class, (Serializable) mapEntry.getKey());
                 //dsm.setDogDiseases(dd);
                 if(Integer.parseInt(mapEntry.getKey().toString()) == 0 && sl == null){
-                    SymptomsList sl3 = new SymptomsList(list.get(j).toString());
+                    
+                    SymptomsList sl3 = new SymptomsList( list.get(j).toString() );
                     //System.out.println(sl3.getSymptoms());
                     dsm.setDogDiseases(dd);
                     session.save(sl3);
                     dsm.setSymptomsList(sl3);
                     session.save(dsm);
+                    
                 }
                 else{
+                    
                     SymptomsList sl2 = (SymptomsList) session.load(SymptomsList.class, (Serializable) mapEntry.getKey());
                     dsm.setDogDiseases(dd);
                     dsm.setSymptomsList(sl2);
                     session.save(dsm);
+                    
                 }
             }
         }
         
         session.getTransaction().commit();
     }
+    
+    public void updateRecords(ArrayList<String> data, int id){
+        
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        session.beginTransaction();
+        
+        DogDiseases dd = (DogDiseases) session.load(DogDiseases.class, id);
+        
+        for(int i = 0 ; i < data.size() ; i++){
+            dd.setDiseaseName(data.get(0));
+            dd.setDiseaseInfo(data.get(1));
+        }
+       
+        session.update(dd);
+        session.getTransaction().commit();
+    }
+    
+    public void deleteRecords(int id){
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        session.beginTransaction();
+        
+        Query qry = session.createQuery( "FROM DiseaseSymptomsMap dsm where dsm.dogDiseases=" + id );
+        
+        ArrayList<DiseaseSymptomsMap> dsm =  (ArrayList<DiseaseSymptomsMap>) qry.list();
+        
+        DogDiseases dd = (DogDiseases) session.load(DogDiseases.class, id);
+        
+        for(DiseaseSymptomsMap map : dsm){
+            session.delete(map);
+        }
+        session.delete(dd);
+        
+        session.getTransaction().commit();
+    }
+    
     
     public void setIdForSelectedSymptoms(MultiValueMap arr){
         this.symptomsListId = arr;

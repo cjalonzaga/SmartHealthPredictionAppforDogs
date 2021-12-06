@@ -15,9 +15,8 @@ import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ComboBoxModel;
@@ -32,12 +31,16 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultEditorKit;
 import org.apache.commons.collections.map.MultiValueMap;
+import org.hibernate.Session;
 import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 import persistence.Diagnose;
+import persistence.SavePatientRecords;
 import persistence.SaveRecords;
 import persistence.ViewRecords;
+import utilities.HibernateUtil;
 
 
 
@@ -81,6 +84,9 @@ public class MainWindow extends javax.swing.JFrame {
         
         diagnoseBTN.setEnabled(false);
         viewOnlineBTN.setEnabled(false);
+        
+        updateDiseaseTableList();
+        updateSymptomsListTable();
     }
 
     /**
@@ -104,9 +110,12 @@ public class MainWindow extends javax.swing.JFrame {
         jScrollPane5 = new javax.swing.JScrollPane();
         symptomsList = new javax.swing.JList<>();
         resetFormBTN = new javax.swing.JButton();
-        diseaseTextFileld = new javax.swing.JComboBox<>();
+        diseaseTextField = new javax.swing.JComboBox<>();
         jLabel10 = new javax.swing.JLabel();
         viewOnlineBTN = new javax.swing.JButton();
+        managePatientRecords = new javax.swing.JDialog();
+        jPanel2 = new javax.swing.JPanel();
+        jLabel11 = new javax.swing.JLabel();
         mainPanelContainer = new javax.swing.JPanel();
         dashPanelContainer = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -126,6 +135,8 @@ public class MainWindow extends javax.swing.JFrame {
         diseasesSection = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jPanel10 = new javax.swing.JPanel();
+        jScrollPane7 = new javax.swing.JScrollPane();
+        diseaseListTable = new javax.swing.JTable();
         editDiseaseBTN = new javax.swing.JButton();
         deleteDiseaseBTN = new javax.swing.JButton();
         addNewDiseaseBTN = new javax.swing.JButton();
@@ -144,10 +155,12 @@ public class MainWindow extends javax.swing.JFrame {
         listPosibleDisease = new javax.swing.JList<>();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
-        jButton4 = new javax.swing.JButton();
+        savePatientRecordBTN = new javax.swing.JButton();
         diagnoseBTN = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         symptomsSection = new javax.swing.JPanel();
+        jScrollPane8 = new javax.swing.JScrollPane();
+        symptomsListTable = new javax.swing.JTable();
         clockLabel = new javax.swing.JLabel();
         timeTitle = new javax.swing.JLabel();
         timeLabel = new javax.swing.JLabel();
@@ -155,7 +168,6 @@ public class MainWindow extends javax.swing.JFrame {
         manageDiseases.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         manageDiseases.setTitle("Add New Disease Form");
         manageDiseases.setLocation(new java.awt.Point(0, 0));
-        manageDiseases.setPreferredSize(new java.awt.Dimension(525, 600));
         manageDiseases.setSize(new java.awt.Dimension(525, 600));
 
         addDiseasePanel.setBackground(new java.awt.Color(46, 48, 71));
@@ -199,8 +211,13 @@ public class MainWindow extends javax.swing.JFrame {
         jScrollPane5.setViewportView(symptomsList);
 
         resetFormBTN.setText("Reset Form");
+        resetFormBTN.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                resetFormBTNActionPerformed(evt);
+            }
+        });
 
-        diseaseTextFileld.setEditable(true);
+        diseaseTextField.setEditable(true);
 
         jLabel10.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
         jLabel10.setForeground(new java.awt.Color(59, 186, 156));
@@ -234,7 +251,7 @@ public class MainWindow extends javax.swing.JFrame {
                                 .addComponent(jScrollPane2)
                                 .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addComponent(jScrollPane5)
-                                .addComponent(diseaseTextFileld, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(diseaseTextField, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGroup(addDiseasePanelLayout.createSequentialGroup()
                                     .addComponent(symptomsTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 352, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addGap(18, 18, 18)
@@ -248,7 +265,7 @@ public class MainWindow extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(diseaseTextFileld, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(diseaseTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(22, 22, 22)
                 .addGroup(addDiseasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(symptomsTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -278,6 +295,36 @@ public class MainWindow extends javax.swing.JFrame {
         manageDiseasesLayout.setVerticalGroup(
             manageDiseasesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(addDiseasePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
+        );
+
+        jPanel2.setBackground(new java.awt.Color(46, 48, 71));
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(431, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(34, 34, 34)
+                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(413, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout managePatientRecordsLayout = new javax.swing.GroupLayout(managePatientRecords.getContentPane());
+        managePatientRecords.getContentPane().setLayout(managePatientRecordsLayout);
+        managePatientRecordsLayout.setHorizontalGroup(
+            managePatientRecordsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        managePatientRecordsLayout.setVerticalGroup(
+            managePatientRecordsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -421,6 +468,11 @@ public class MainWindow extends javax.swing.JFrame {
         manageSymptomsBTN.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         manageSymptomsBTN.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/manageS.png"))); // NOI18N
         manageSymptomsBTN.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        manageSymptomsBTN.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                manageSymptomsBTNMouseClicked(evt);
+            }
+        });
 
         viewRecordsBTN.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         viewRecordsBTN.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/history.png"))); // NOI18N
@@ -454,15 +506,30 @@ public class MainWindow extends javax.swing.JFrame {
 
         jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
+        diseaseListTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane7.setViewportView(diseaseListTable);
+
         javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
         jPanel10.setLayout(jPanel10Layout);
         jPanel10Layout.setHorizontalGroup(
             jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 692, Short.MAX_VALUE)
+            .addGroup(jPanel10Layout.createSequentialGroup()
+                .addComponent(jScrollPane7, javax.swing.GroupLayout.DEFAULT_SIZE, 682, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
             jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 353, Short.MAX_VALUE)
+            .addComponent(jScrollPane7, javax.swing.GroupLayout.DEFAULT_SIZE, 344, Short.MAX_VALUE)
         );
 
         jScrollPane1.setViewportView(jPanel10);
@@ -472,12 +539,22 @@ public class MainWindow extends javax.swing.JFrame {
         editDiseaseBTN.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
         editDiseaseBTN.setText("Edit");
         editDiseaseBTN.setFocusPainted(false);
+        editDiseaseBTN.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                editDiseaseBTNActionPerformed(evt);
+            }
+        });
 
         deleteDiseaseBTN.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
         deleteDiseaseBTN.setForeground(new java.awt.Color(59, 186, 156));
         deleteDiseaseBTN.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trash.png"))); // NOI18N
         deleteDiseaseBTN.setText("Delete");
         deleteDiseaseBTN.setFocusPainted(false);
+        deleteDiseaseBTN.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteDiseaseBTNActionPerformed(evt);
+            }
+        });
 
         addNewDiseaseBTN.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
         addNewDiseaseBTN.setForeground(new java.awt.Color(59, 186, 156));
@@ -600,7 +677,12 @@ public class MainWindow extends javax.swing.JFrame {
 
         jLabel9.setText("Double click to view information.");
 
-        jButton4.setText("Save Record");
+        savePatientRecordBTN.setText("Save Record");
+        savePatientRecordBTN.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                savePatientRecordBTNActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout diagnosedTabLayout = new javax.swing.GroupLayout(diagnosedTab);
         diagnosedTab.setLayout(diagnosedTabLayout);
@@ -615,7 +697,7 @@ public class MainWindow extends javax.swing.JFrame {
                 .addContainerGap(20, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, diagnosedTabLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton4)
+                .addComponent(savePatientRecordBTN)
                 .addContainerGap())
         );
         diagnosedTabLayout.setVerticalGroup(
@@ -628,7 +710,7 @@ public class MainWindow extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton4)
+                .addComponent(savePatientRecordBTN)
                 .addGap(105, 105, 105))
         );
 
@@ -679,15 +761,34 @@ public class MainWindow extends javax.swing.JFrame {
         layeredPane.add(diagnosePane, "card4");
         diagnosePane.getAccessibleContext().setAccessibleDescription("");
 
+        symptomsListTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane8.setViewportView(symptomsListTable);
+
         javax.swing.GroupLayout symptomsSectionLayout = new javax.swing.GroupLayout(symptomsSection);
         symptomsSection.setLayout(symptomsSectionLayout);
         symptomsSectionLayout.setHorizontalGroup(
             symptomsSectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 719, Short.MAX_VALUE)
+            .addGroup(symptomsSectionLayout.createSequentialGroup()
+                .addGap(37, 37, 37)
+                .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 648, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(34, Short.MAX_VALUE))
         );
         symptomsSectionLayout.setVerticalGroup(
             symptomsSectionLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 517, Short.MAX_VALUE)
+            .addGroup(symptomsSectionLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 403, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(103, Short.MAX_VALUE))
         );
 
         layeredPane.add(symptomsSection, "card6");
@@ -796,10 +897,11 @@ public class MainWindow extends javax.swing.JFrame {
         saveDiseaseBTN.setEnabled(true);
         resetFormBTN.setEnabled(true);
         //guiDataUpdateThread();
-        clearForm();
+        //clearForm();
         autoCompleteJCombo();
         diseasesSection.setVisible(true);
         switchPanels(diseasesSection);
+        
     }//GEN-LAST:event_manageDiseaseBTNMouseClicked
 
     private void addNewDiseaseBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addNewDiseaseBTNActionPerformed
@@ -812,7 +914,7 @@ public class MainWindow extends javax.swing.JFrame {
         
         String symptom = symptomsTextField.getSelectedItem().toString();
         
-        HashMap<Integer,String> map = new HashMap<>(dbq.getMapping());
+        //HashMap<Integer,String> map = new HashMap<>(dbq.getMapping());
         
         if(!"".equals(symptom) && !model.contains(symptom)){
             model.addElement(symptom);
@@ -826,12 +928,16 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void saveDiseaseBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveDiseaseBTNActionPerformed
 
-        boolean bool = getIdSelectedDisease(diseaseTextFileld.getSelectedItem().toString());
-        //System.out.println(bool);
-        if( validateForm() &&  bool != true){
+        boolean bool = getIdSelectedDisease(diseaseTextField.getSelectedItem().toString());
+        //System.out.println(validateForm() + " " + bool);
+        SaveRecords sr = new SaveRecords();
+       
+        if( validateForm() &&  bool == false && "Save".equals(saveDiseaseBTN.getText()) ){
+           
             int size = symptomsList.getModel().getSize();
-            String diseaseName = diseaseTextFileld.getSelectedItem().toString();
+            String diseaseName = diseaseTextField.getSelectedItem().toString();
             String diseaseInfo = diseaseInfField.getText();
+            
             for(int i = 0 ; i < size ; i++){
                 Object list =symptomsList.getModel().getElementAt(i);
                 //symptomsId.put(getIdSelectedSymptoms(list) , list.toString());
@@ -842,7 +948,6 @@ public class MainWindow extends javax.swing.JFrame {
             DogDiseases dd = new DogDiseases( diseaseName, diseaseInfo );
             
             SaveRecords.setDogDiseasesData(dd);
-            SaveRecords sr = new SaveRecords();
             sr.setIdForSelectedSymptoms(multimap);
             
             try {
@@ -853,6 +958,24 @@ public class MainWindow extends javax.swing.JFrame {
             
             clearForm();
             guiDataUpdateThread();
+            
+        }
+        else if("Update".equals(saveDiseaseBTN.getText())){
+            
+            ArrayList<String> diseaseData = new ArrayList<>();
+            
+            String diseaseName = diseaseTextField.getSelectedItem().toString();
+            String diseaseInfo = diseaseInfField.getText();
+            
+            diseaseData.add(diseaseName);
+            diseaseData.add(diseaseInfo);
+            
+            Integer id = (Integer) diseaseListTable.getValueAt(diseaseListTable.getSelectedRow(), 0);
+            sr.updateRecords( diseaseData , id);
+            
+            clearForm();
+            guiDataUpdateThread();
+            
         }
         else if(bool){
             setPopUpMessage("Disease already exist...");
@@ -865,7 +988,7 @@ public class MainWindow extends javax.swing.JFrame {
     
     private void clearForm(){
         
-        diseaseTextFileld.setSelectedItem("");
+        diseaseTextField.setSelectedItem("");
         symptomsTextField.setSelectedItem("");
         DefaultListModel dlm = (DefaultListModel) symptomsList.getModel();
         dlm.removeAllElements();
@@ -873,7 +996,7 @@ public class MainWindow extends javax.swing.JFrame {
         diseaseInfField.setText("");
         
     }
-    
+    //to update UI when new disease is added
     private void guiDataUpdateThread(){
         
         SwingWorker thread = new SwingWorker(){
@@ -881,6 +1004,8 @@ public class MainWindow extends javax.swing.JFrame {
             @Override
             protected Object doInBackground() throws Exception {
                 autoCompleteJCombo();
+                updateDiseaseTableList();
+                updateSymptomsListTable();
                 return "updated";
             }
         };
@@ -888,8 +1013,44 @@ public class MainWindow extends javax.swing.JFrame {
         thread.execute();
     }
     
+    private void updateDiseaseTableList(){
+       DBQueries dbq = new DBQueries();
+       dbq.setDiseases();
+       
+       DefaultTableModel tablemodel = new DefaultTableModel(new Object[] {"ID", "Disease Name"}, 0){
+           @Override
+           public boolean isCellEditable(int row , int column){
+               return false;
+           }
+       };
+       
+       for(Entry<Integer, String> data : dbq.getMapping().entrySet()){
+           tablemodel.addRow(new Object[]{ data.getKey(), data.getValue() });
+       }
+       
+       diseaseListTable.setModel(tablemodel);
+    }
+    
+    private void updateSymptomsListTable(){
+        DBQueries dbq = new DBQueries();
+        dbq.setSymptoms();
+        
+        DefaultTableModel tablemodel = new DefaultTableModel(new Object[] {"ID", "Symptoms"}, 0){
+           @Override
+           public boolean isCellEditable(int row , int column){
+               return false;
+           }
+       };
+       
+       for(Entry<Integer, String> data : dbq.getMapping().entrySet()){
+           tablemodel.addRow(new Object[]{ data.getKey(), data.getValue() });
+       }
+       
+       symptomsListTable.setModel(tablemodel);
+    }
+    
     private boolean validateForm(){
-        boolean bool = symptomsList.getModel().getSize() != 0 && diseaseTextFileld.getItemCount() != 0 && !"".equals(diseaseInfField.getText());
+        boolean bool = symptomsList.getModel().getSize() != 0 && !"".equals(diseaseTextField.getSelectedItem().toString()) && !"".equals(diseaseInfField.getText());
         return bool;
     }
        
@@ -907,12 +1068,13 @@ public class MainWindow extends javax.swing.JFrame {
         } catch (Exception ex) {
             Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
         jTabbedPane1.setEnabledAt(1, true);
         jTabbedPane1.setSelectedIndex(1);
     }//GEN-LAST:event_nextDiagnoseBTNActionPerformed
 
     private void diagnoseBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_diagnoseBTNActionPerformed
-        //System.out.println(DBQueries.getDiseaseId());
+        //System.out.println(DBQueries.getSymtomsId());
         if(!DBQueries.getSymtomsId().isEmpty()){
             Diagnose d = new Diagnose();
             d.setSymptomsId(DBQueries.getSymtomsId());
@@ -921,11 +1083,9 @@ public class MainWindow extends javax.swing.JFrame {
             setDiseaseHashMap(d.getDiseaseHashMap());
             showListFinalDiagnoses(d.getFinalDiagnoses());
             
-            System.out.println(d.getDiseaseHashMap());
-            
             jTabbedPane1.setEnabledAt(2, true);
             jTabbedPane1.setSelectedIndex(2);
-           
+            
         }
         else{
             setPopUpMessage("Please select symptoms..");
@@ -966,7 +1126,7 @@ public class MainWindow extends javax.swing.JFrame {
             
             symptomsList.setModel(model2);
             
-            getAutocompleteComboBox(diseaseTextFileld, model);
+            getAutocompleteComboBox(diseaseTextField, model);
             
             manageDiseases.setVisible(true);
         }
@@ -993,7 +1153,7 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_symptomsTextFieldActionPerformed
 
     private void viewOnlineBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewOnlineBTNActionPerformed
-        String str = diseaseTextFileld.getSelectedItem().toString();
+        String str = diseaseTextField.getSelectedItem().toString();
         String searchQuery = str.replace(" ", "+");
        
         try {
@@ -1002,6 +1162,65 @@ public class MainWindow extends javax.swing.JFrame {
             Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_viewOnlineBTNActionPerformed
+
+    private void resetFormBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetFormBTNActionPerformed
+        clearForm();
+    }//GEN-LAST:event_resetFormBTNActionPerformed
+
+    private void savePatientRecordBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savePatientRecordBTNActionPerformed
+        
+    }//GEN-LAST:event_savePatientRecordBTNActionPerformed
+
+    private void editDiseaseBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editDiseaseBTNActionPerformed
+        ViewRecords vr = new ViewRecords();
+        saveDiseaseBTN.setText("Update");
+        int num = diseaseListTable.getSelectedRow();
+        if(num != -1){
+            
+            String dis = diseaseListTable.getValueAt(diseaseListTable.getSelectedRow(), 0).toString();
+            vr.searchRecords( Integer.parseInt( dis) );
+            
+             DefaultComboBoxModel model = new DefaultComboBoxModel();
+            for(int i = 0; i < vr.getDiseaseInfo().size() ; i++){
+                model.addElement(vr.getDiseaseInfo().get(0));
+                diseaseInfField.setText(vr.getDiseaseInfo().get(1));
+            }
+            
+            DefaultListModel model2 = new DefaultListModel();
+            for(int i = 0 ; i < vr.getSymptomsViewRecord().size() ; i++){
+                model2.addElement(vr.getSymptomsViewRecord().get(i));
+            }
+            
+            getAutocompleteComboBox(diseaseTextField, model);
+            symptomsList.setModel(model2);
+            
+            manageDiseases.setVisible(true);
+        }
+        else{
+            setPopUpMessage("Select a disease?");
+        }
+    }//GEN-LAST:event_editDiseaseBTNActionPerformed
+
+    private void deleteDiseaseBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteDiseaseBTNActionPerformed
+       
+        String dis = diseaseListTable.getValueAt(diseaseListTable.getSelectedRow(), 0).toString();
+        SaveRecords sr = new SaveRecords();
+        if(Integer.parseInt(dis) != -1){ 
+           sr.deleteRecords(Integer.parseInt(dis));
+           
+           setPopUpMessage("Record has been deleted..");
+           
+           guiDataUpdateThread();
+        }
+        else{
+            setPopUpMessage("Please select disease to be deleted..");
+        }
+        
+    }//GEN-LAST:event_deleteDiseaseBTNActionPerformed
+
+    private void manageSymptomsBTNMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_manageSymptomsBTNMouseClicked
+        switchPanels(symptomsSection);
+    }//GEN-LAST:event_manageSymptomsBTNMouseClicked
     
     //display final diagnoses results on jList
     public void showListFinalDiagnoses(ArrayList<String> hash){
@@ -1073,7 +1292,7 @@ public class MainWindow extends javax.swing.JFrame {
             model2.addElement(dbq.getDiseases().get(i));
         }
         
-        getAutocompleteComboBox(diseaseTextFileld, model2);
+        getAutocompleteComboBox(diseaseTextField, model2);
         getAutocompleteComboBox(symptomsTextField, model);
     }
     
@@ -1092,11 +1311,11 @@ public class MainWindow extends javax.swing.JFrame {
             @Override
             public void itemStateChanged(ItemEvent e) {   
                 if(e.getStateChange() == 1){
-                    DBQueries.setSymtomsId(getIdSelectedSymptoms(checkbox.getText()));
+                    DBQueries.setSymtomsId( getIdSelectedSymptoms(checkbox.getText()) );
 //                    System.out.println(DBQueries.getDiseaseId());
                 }
                 else{
-                    DBQueries.setSymtomsId(getIdSelectedSymptoms(checkbox.getText()));
+                    DBQueries.setSymtomsId( getIdSelectedSymptoms(checkbox.getText()) );
                     //System.out.println(DBQueries.getDiseaseId());
                 }
             }
@@ -1205,16 +1424,17 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JPanel diagnosePane;
     private javax.swing.JPanel diagnosedTab;
     private javax.swing.JTextArea diseaseInfField;
-    private javax.swing.JComboBox<String> diseaseTextFileld;
+    private javax.swing.JTable diseaseListTable;
+    private javax.swing.JComboBox<String> diseaseTextField;
     private javax.swing.JPanel diseasesSection;
     private javax.swing.JButton editDiseaseBTN;
     private javax.swing.JPanel filteredDiseaseTab;
     private javax.swing.JPanel filteredSymptomsPanel;
     private javax.swing.JPanel introPanel;
     private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1225,12 +1445,15 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
+    private javax.swing.JScrollPane jScrollPane7;
+    private javax.swing.JScrollPane jScrollPane8;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLayeredPane layeredPane;
     private javax.swing.JList<String> listPosibleDisease;
@@ -1238,13 +1461,16 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JPanel mainPanelContainer;
     private javax.swing.JLabel manageDiseaseBTN;
     private javax.swing.JDialog manageDiseases;
+    private javax.swing.JDialog managePatientRecords;
     private javax.swing.JLabel manageSymptomsBTN;
     private javax.swing.JButton nextDiagnoseBTN;
     private javax.swing.JButton resetFormBTN;
     private javax.swing.JButton saveDiseaseBTN;
+    private javax.swing.JButton savePatientRecordBTN;
     private javax.swing.JPanel settingsPanel;
     private javax.swing.JPanel sideWidgetPanel;
     private javax.swing.JList<String> symptomsList;
+    private javax.swing.JTable symptomsListTable;
     private javax.swing.JPanel symptomsSection;
     private javax.swing.JComboBox<String> symptomsTextField;
     private javax.swing.JLabel timeLabel;

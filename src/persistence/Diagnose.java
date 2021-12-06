@@ -6,6 +6,7 @@
 package persistence;
 
 import entities.DiseaseSymptomsMap;
+import entities.DogDiseases;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,6 +23,7 @@ public class Diagnose extends DBQueries{
     private HashSet<Integer> arr = new HashSet<>();
     private HashSet<String> hash = new HashSet<>();
     private ArrayList<String> listDisease;
+  
     private HashMap<Integer , String> map = new HashMap<>();
     
    
@@ -92,8 +94,10 @@ public class Diagnose extends DBQueries{
         session.beginTransaction();
 
         for(DiseaseSymptomsMap dsm : dmap){
+            
             this.hash.add(dsm.getDogDiseases().getDiseaseName());
             map.put(dsm.getDogDiseases().getId(), dsm.getDogDiseases().getDiseaseName());
+            
         }
         
         listDisease = new ArrayList<>(this.hash);
@@ -108,4 +112,5 @@ public class Diagnose extends DBQueries{
     public ArrayList<String> getFinalDiagnoses(){
         return this.listDisease;
     }
+    
 }

@@ -44,7 +44,22 @@ public class ViewRecords {
             }
         }
         
-       
+        session.getTransaction().commit();
+        
+    }
+    
+    public void searchRecords(int id){
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        session.beginTransaction();
+        
+        Query qry = session.createQuery( "FROM DiseaseSymptomsMap dsm where dsm.dogDiseases=" + id );
+        
+        ArrayList<DiseaseSymptomsMap> dsm =  (ArrayList<DiseaseSymptomsMap>) qry.list();
+        setSymptomsViewRecord(dsm);
+        
+        DogDiseases dd = ( DogDiseases) session.load(DogDiseases.class, id);
+        this.diseaseInfos.add( dd.getDiseaseName() );
+        this.diseaseInfos.add( dd.getDiseaseInfo() );
         
         session.getTransaction().commit();
     }

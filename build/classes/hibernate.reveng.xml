@@ -2,7 +2,7 @@
 <!DOCTYPE hibernate-reverse-engineering PUBLIC "-//Hibernate/Hibernate Reverse Engineering DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-reverse-engineering-3.0.dtd">
 <hibernate-reverse-engineering>
   <schema-selection match-catalog="shpda_dogs"/>
+  <table-filter match-name="dog_diseases"/>
   <table-filter match-name="symptoms_list"/>
   <table-filter match-name="disease_symptoms_map"/>
-  <table-filter match-name="dog_diseases"/>
 </hibernate-reverse-engineering>
